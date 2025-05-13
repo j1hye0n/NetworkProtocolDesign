@@ -18,7 +18,9 @@
   동작을 시작하면서 임의의 단말기로 기지국 정보가 담긴 텍스트 기반 데이터를 전송하는 것을 목표로 동작한다. 단말기가 해당 기지국에 등록을 시도할 때 단말기에 신호를 보내주는 과정을 수행한다. 단말기 연결 여부와 관련 없이 기지국에 대한 데이터 송신을 근본적인 목표로 한다.
 
 # FSM Design
-https://github.com/j1hye0n/NetworkProtocolDesign/issues/1#issue-3060220511
+![Image](https://github.com/user-attachments/assets/d508cb94-2c0a-4080-8dc2-e85fc607aa12)
+
+![Image](https://github.com/user-attachments/assets/3148bace-4b02-49e6-8b33-6fd7fa68fb06)
 
 
 # Specification
