@@ -24,30 +24,30 @@ static uint8_t sdu[1030];
 static Serial pc(USBTX, USBRX);
 static uint8_t myDestId;
 
-//application event handler : generating SDU from keyboard input
-static void L3service_processInputWord(void)
-{
-    char c = pc.getc();
-    if (!L3_event_checkEventFlag(L3_event_dataToSend))
-    {
-        if (c == '\n' || c == '\r')
-        {
-            originalWord[wordLen++] = '\0';
-            L3_event_setEventFlag(L3_event_dataToSend);
-            debug_if(DBGMSG_L3,"word is ready! ::: %s\n", originalWord);
-        }
-        else
-        {
-            originalWord[wordLen++] = c;
-            if (wordLen >= L3_MAXDATASIZE-1)
-            {
-                originalWord[wordLen++] = '\0';
-                L3_event_setEventFlag(L3_event_dataToSend);
-                pc.printf("\n max reached! word forced to be ready :::: %s\n", originalWord);
-            }
-        }
-    }
-}
+// //application event handler : generating SDU from keyboard input
+// static void L3service_processInputWord(void)
+// {
+//     char c = pc.getc();
+//     if (!L3_event_checkEventFlag(L3_event_dataToSend))
+//     {
+//         if (c == '\n' || c == '\r')
+//         {
+//             originalWord[wordLen++] = '\0';
+//             L3_event_setEventFlag(L3_event_dataToSend);
+//             debug_if(DBGMSG_L3,"word is ready! ::: %s\n", originalWord);
+//         }
+//         else
+//         {
+//             originalWord[wordLen++] = c;
+//             if (wordLen >= L3_MAXDATASIZE-1)
+//             {
+//                 originalWord[wordLen++] = '\0';
+//                 L3_event_setEventFlag(L3_event_dataToSend);
+//                 pc.printf("\n max reached! word forced to be ready :::: %s\n", originalWord);
+//             }
+//         }
+//     }
+// }
 
 
 
@@ -79,25 +79,39 @@ void L3_FSMrun(void)
                 //Retrieving data info.
                 uint8_t* dataPtr = L3_LLI_getMsgPtr();
                 uint8_t size = L3_LLI_getSize();
+                uint8_t rssi = L3_LLI_getRssi();    //Rssi&ID variables are added date.05/13
+                uint8_t srcId = L3_LLI_getSrcId();
 
-                debug("\n -------------------------------------------------\nRCVD MSG : %s (length:%i)\n -------------------------------------------------\n", 
-                            dataPtr, size);
+                // debug("\n -------------------------------------------------\nRCVD MSG : %s (length:%i)\n -------------------------------------------------\n", 
+                //             dataPtr, size);
                 
-                pc.printf("Give a word to send : ");
+                if srcId == 221
+                {
+                    if dataPtr = "REQUEST"
+                    {
+                        pc.printf("Request from UE 221 to be connected.\n");
+                        sdu = "ACCEPT";
+                        pc.printf("Send ACCEPT to UE 221.\n");
+                    }
+                }
+                else
+                {
+                    pc.printf("Unknown signal is coming.\n");
+                }
                 
                 L3_event_clearEventFlag(L3_event_msgRcvd);
             }
             else if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent (keyboard input)
             {
                 //msg header setting
-                strcpy((char*)sdu, (char*)originalWord);
-                debug("[L3] msg length : %i\n", wordLen);
-                L3_LLI_dataReqFunc(sdu, wordLen, myDestId);
+                // strcpy((char*)sdu, (char*)originalWord);
+                // debug("[L3] msg length : %i\n", wordLen);
+                L3_LLI_dataReqFunc(sdu, 7, myDestId);
 
                 debug_if(DBGMSG_L3, "[L3] sending msg....\n");
                 wordLen = 0;
 
-                pc.printf("Give a word to send : ");
+                // pc.printf("Give a word to send : ");
 
                 L3_event_clearEventFlag(L3_event_dataToSend);
             }

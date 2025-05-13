@@ -55,6 +55,11 @@ uint8_t L3_LLI_getSrcId()
     return rcvdSrcId;
 }
 
+uint8_t L3_LLI_getRssi()
+{
+    return rcvdRssi;
+}
+
 void L3_LLI_setDataReqFunc(void (*funcPtr)(uint8_t*, uint8_t, uint8_t))
 {
     L3_LLI_dataReqFunc = funcPtr;
