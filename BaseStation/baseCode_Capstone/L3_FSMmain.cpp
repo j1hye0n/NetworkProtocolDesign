@@ -58,7 +58,7 @@ void L3_initFSM(uint8_t destId)
     //initialize service layer
     pc.attach(&L3service_processInputWord, Serial::RxIrq);
 
-    pc.printf("Give a word to send : ");
+    // pc.printf("Give a word to send : "); msg 전달용 이라고 생각해서 주석 05/16
 }
 
 void L3_FSMrun(void)
@@ -85,16 +85,16 @@ void L3_FSMrun(void)
                 // debug("\n -------------------------------------------------\nRCVD MSG : %s (length:%i)\n -------------------------------------------------\n", 
                 //             dataPtr, size);
                 
-                if srcId == 221
+                if srcId == 221 // condition1
                 {
-                    if dataPtr = "REQUEST"
+                    if dataPtr = "REQUEST" //condition2
                     {
                         pc.printf("Request from UE 221 to be connected.\n");
-                        sdu = "ACCEPT";
+                        sdu = "ACCEPT"; //action 2
                         pc.printf("Send ACCEPT to UE 221.\n");
                     }
                 }
-                else
+                else //not condition1
                 {
                     pc.printf("Unknown signal is coming.\n");
                 }
