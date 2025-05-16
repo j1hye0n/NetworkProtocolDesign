@@ -26,3 +26,8 @@
 # Specification
 
 [sepcification](https://docs.google.com/document/d/1CPrHq24S4n9PZwCJH4p2SVPPtfjFayoqZT9yWprQpQs/edit?usp=sharing) 전문
+
+
+# 연구 일지
+> 05/13(화) : 연구 계획, 코드 협업 방법 확정, base code 공유
+> 05/16(금) : base station code L3FSM_main code
