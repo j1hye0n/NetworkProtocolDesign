@@ -9,6 +9,7 @@ static uint8_t rcvdSize;
 static int16_t rcvdRssi;
 static int8_t rcvdSnr;
 static uint8_t rcvdSrcId;
+static uint8_t rssi;
 
 //Downward primitives
 //TX function
