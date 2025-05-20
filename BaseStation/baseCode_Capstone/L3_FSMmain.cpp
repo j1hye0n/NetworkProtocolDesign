@@ -88,9 +88,10 @@ void L3_FSMrun(void)
         case L3STATE_IDLE: //IDLE state description
 
             // pdu 송신(L2로 보냄) & timer돌리고, 초기화하는 로직을 구현 >>>
-            L3_LLI_dataReqFunc(sdu, 7, myDestId); // pdu 송신(L2)
+            L3_LLI_dataReqFunc(sdu, 200, myDestId); // pdu 송신(L2)
 
             debug_if(DBGMSG_L3, "[L3] sending msg....\n");
+            wordLen = 0;
 
             L3_timer_startTimer(); // DATA 주기적으로 보내는 Timer
 
@@ -129,7 +130,7 @@ void L3_FSMrun(void)
                 //msg header setting
                 strcpy((char*)sdu, (char*)originalWord);
                 // debug("[L3] msg length : %i\n", wordLen);
-                L3_LLI_dataReqFunc(sdu, 200, myDestId);
+                closedir
                 
                 //debug_if(DBGMSG_L3, "[L3] sending msg....\n");
                 //wordLen = 0;
@@ -137,6 +138,15 @@ void L3_FSMrun(void)
                 
                 // pc.printf("Give a word to send : ");
                 L3_event_clearEventFlag(L3_event_dataToSend);
+            }
+            else if (!L3_timer_getTimerStatus())
+            {
+                L3_LLI_dataReqFunc(sdu, 200, myDestId);
+
+                debug_if(DBGMSG_L3, "[L3] sending msg....\n");
+                wordLen = 0;
+
+                L3_timer_startTimer();
             }
             break;
 
