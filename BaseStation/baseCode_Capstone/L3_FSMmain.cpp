@@ -4,10 +4,7 @@
 #include "L3_LLinterface.h"
 #include "protocol_parameters.h"
 #include "mbed.h"
-#include <iostream>
-#include <string>
-#include <cstdio>
-#include <sstream>
+
 
 //FSM state -------------------------------------------------
 #define L3STATE_IDLE                0
@@ -26,7 +23,7 @@ static uint8_t sdu[1030];
 //serial port interface
 static Serial pc(USBTX, USBRX);
 static uint8_t myDestId;
-static uint8_t myL2Id;
+// static uint8_t myL2Id;
 
 // application event handler : generating SDU from keyboard input
 static void L3service_processInputWord(void)
@@ -58,11 +55,17 @@ static void L3service_processInputWord(void)
 
 
 
-void L3_initFSM(uint8_t destId) //여기서 pdu 생성
+void L3_initFSM(uint8_t destId)
 {
 
     myDestId = destId;
-    //initialize service layer
+
+    // 처음 PDU 셋팅
+    strcpy((char*) originalWord, "Sending DATA\0");
+    L3_event_setEventFlag(L3_event_dataToSend);
+
+    
+    // //initialize service layer
     //pc.attach(&L3service_processInputWord, Serial::RxIrq); 
 
     // //sdu = 기지국ID(CID) + PDU인지 알려주는 문구
@@ -75,7 +78,7 @@ void L3_initFSM(uint8_t destId) //여기서 pdu 생성
 }
 
 void L3_FSMrun(void)
-{   
+{       
     if (prev_state != main_state)
     {
         debug_if(DBGMSG_L3, "[L3] State transition from %i to %i\n", prev_state, main_state);
@@ -87,15 +90,10 @@ void L3_FSMrun(void)
     {
         case L3STATE_IDLE: //IDLE state description
 
-            // pdu 송신(L2로 보냄) & timer돌리고, 초기화하는 로직을 구현 >>>
-            L3_LLI_dataReqFunc(sdu, 200, myDestId); // pdu 송신(L2)
+            // 주기적 DATA 송신을 위한 timer 작동
+            L3_timer_startTimer();
 
-            debug_if(DBGMSG_L3, "[L3] sending msg....\n");
-            wordLen = 0;
 
-            L3_timer_startTimer(); // DATA 주기적으로 보내는 Timer
-
-            
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens (event a)
             {
                 //Retrieving data info.
@@ -109,43 +107,47 @@ void L3_FSMrun(void)
                 
                 if (srcId == 221) // condition1
                 {
-                    if (strcmp((char*)dataPtr, "REQUEST") == 0) //condition2
+                    if (strcmp((char*) dataPtr, "REQUEST") == 0) //condition2
                     {
                         pc.printf("Request from UE 221 to be connected.\n");
+
                         strcpy((char*) originalWord, "ACCEPT\0"); //action 2
-                        pc.printf("Send ACCEPT to UE 221.\n");
+                        L3_event_setEventFlag(L3_event_dataToSend);
+                        pc.printf("Tried to Send ACCEPT to UE 221.\n");
                     }
                 }
                 else //not condition1
                 {
                     pc.printf("Unknown signal is coming.\n");
-                    // strcpy((char*) originalWord, "Sending DATA\0");
                 }
                 
                 L3_event_clearEventFlag(L3_event_msgRcvd);
             }
             //else if 안의 내용은 initFSM & case IDLE에 옮김
-            else if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent (keyboard input) 
+            else if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent
             {
                 //msg header setting
-                strcpy((char*)sdu, (char*)originalWord);
+                strcpy((char*) sdu, (char*) originalWord);
+                //L2에 data Request
+                L3_LLI_dataReqFunc(sdu, 200, myDestId);
                 // debug("[L3] msg length : %i\n", wordLen);
-                closedir
-                
-                //debug_if(DBGMSG_L3, "[L3] sending msg....\n");
+                debug_if(DBGMSG_L3, "[L3] sending msg....\n");
                 //wordLen = 0;
+
+                //PDU 기본값으로 셋팅
                 strcpy((char*) originalWord, "Sending DATA\0");
                 
-                // pc.printf("Give a word to send : ");
                 L3_event_clearEventFlag(L3_event_dataToSend);
             }
-            else if (!L3_timer_getTimerStatus())
-            {
+            
+            if (!L3_timer_getTimerStatus())
+            {   
+                // 일정 시간(Timer)마다 PDU(기지국 DATA) 재전송
                 L3_LLI_dataReqFunc(sdu, 200, myDestId);
-
                 debug_if(DBGMSG_L3, "[L3] sending msg....\n");
-                wordLen = 0;
+                // wordLen = 0;
 
+                // 타이머 재작동
                 L3_timer_startTimer();
             }
             break;
