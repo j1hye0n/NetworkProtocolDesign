@@ -58,11 +58,10 @@ static void L3service_processInputWord(void)
 
 
 
-void L3_initFSM(uint8_t destId, uint8_t myId) //여기서 pdu 생성
+void L3_initFSM(uint8_t destId) //여기서 pdu 생성
 {
 
     myDestId = destId;
-    myL2Id = myId;
     //initialize service layer
     //pc.attach(&L3service_processInputWord, Serial::RxIrq); 
 
