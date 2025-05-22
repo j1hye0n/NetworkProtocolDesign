@@ -94,12 +94,11 @@ void L3_FSMrun(void)
                 strcpy((char*) originalWord, "Sending DATA\0");
                 L3_event_setEventFlag(L3_event_dataToSend);
                 L3_timer_startTimer();
-                // pc.printf("timer status : %i",L3_timer_getTimerStatus());
+                // pc.printf("sending data\n");
             }
 
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens (event a)
             {
-                pc.printf("cheking for msgRcvd"); // 여기 동작 안함
                 //Retrieving data info.
                 uint8_t* dataPtr = L3_LLI_getMsgPtr();
                 // uint8_t size = L3_LLI_getSize();
@@ -137,7 +136,6 @@ void L3_FSMrun(void)
                 // debug("[L3] msg length : %i\n", wordLen);
                 // debug_if(DBGMSG_L3, "[L3] sending msg....\n");
                 //wordLen = 0;
-                pc.printf("check data\n\r"); // 여기 동작함 한 번!
 
                 //PDU 기본값으로 셋팅
                 strcpy((char*) originalWord, "Sending DATA\n\r");
@@ -148,13 +146,10 @@ void L3_FSMrun(void)
             if (L3_event_checkEventFlag(L3_event_arqTimeout))
             {   
                 // 일정 시간(Timer)마다 PDU(기지국 DATA) 재전송
-                
                 // L3_timer_stopTimer();
-                pc.printf("check time out\n\r");    // 동작 안함
 
                 // 타이머 재작동
                 L3_timer_startTimer();
-                pc.printf("check timer restart\n\r");   // 동작 안함
 
                 L3_event_clearEventFlag(L3_event_arqTimeout);
             }

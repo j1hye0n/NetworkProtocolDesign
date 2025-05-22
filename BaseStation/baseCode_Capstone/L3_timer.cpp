@@ -18,7 +18,7 @@ void L3_timer_timeoutHandler(void)
 //timer related functions ---------------------------
 void L3_timer_startTimer()
 {
-    uint8_t waitTime = 10; //timer length // 길다란 수식 = waittime 10~49 사이 무작위 지정
+    uint8_t waitTime = 2; //timer length // 길다란 수식 = waittime 10~49 사이 무작위 지정
     timer.attach(L3_timer_timeoutHandler, waitTime);
     timerStatus = 1;
 }

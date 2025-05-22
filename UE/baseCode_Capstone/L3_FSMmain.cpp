@@ -16,7 +16,7 @@
 #define L3STATE_IDLE                0
 #define L3STATE_LND                 1
 #define L3STATE_ACK                 2
-#define RSSI_LIMIT                  0 // rssi : -30~-100이라서 실제 기준치는 이 사이값으로 잡아야할 것 같긴한데, 지금은 신호가 들어오는지 확인해야 하니까 0으로 둘게
+#define RSSI_LIMIT                  0 // 200 정도
 
 //Cell(Base Station) ID
 static uint8_t C_ID[3] = {145, 208, 89};
