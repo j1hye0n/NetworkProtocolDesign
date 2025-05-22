@@ -23,7 +23,7 @@ static uint8_t C_ID[3] = {145, 208, 89};
 static uint8_t my_cell_id = 0;
 static int j = 0;
 static int16_t rssi[100];
-static int16_t max_rssi;
+static int16_t max_rssi;    // array del
 static uint8_t id[100];
 
 //state variables
