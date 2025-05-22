@@ -61,13 +61,6 @@ void L3_initFSM(uint8_t destId)
     myDestId = destId;
 
     // pc.attach(&L3service_processInputWord,Serial::RxIrq);
-
-    // 처음 PDU 셋팅
-    strcpy((char*) originalWord, "Sending DATA\0");
-    L3_event_setEventFlag(L3_event_dataToSend);
-
-    pc.printf("PDU setting finished.");
-
     
     // //initialize service layer
     //pc.attach(&L3service_processInputWord, Serial::RxIrq); 
@@ -95,8 +88,14 @@ void L3_FSMrun(void)
         case L3STATE_IDLE: //IDLE state description
 
             // 주기적 DATA 송신을 위한 timer 작동
-            L3_timer_startTimer();
-            // pc.printf("timer status : %i",L3_timer_getTimerStatus());
+            // 처음 PDU 셋팅
+            if (!L3_timer_getTimerStatus())
+            {
+                strcpy((char*) originalWord, "Sending DATA\0");
+                L3_event_setEventFlag(L3_event_dataToSend);
+                L3_timer_startTimer();
+                // pc.printf("timer status : %i",L3_timer_getTimerStatus());
+            }
 
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens (event a)
             {
@@ -112,18 +111,18 @@ void L3_FSMrun(void)
                 
                 if (srcId == 221) // condition1
                 {
-                    if (strcmp((char*) dataPtr, "REQUEST\n") == 0) //condition2
+                    if (strcmp((char*) dataPtr, "REQUEST\n\r") == 0) //condition2
                     {
-                        pc.printf("Request from UE 221 to be connected.\n");
+                        pc.printf("Request from UE 221 to be connected.\n\r");
 
-                        strcpy((char*) originalWord, "ACCEPT\n"); //action 2
+                        strcpy((char*) originalWord, "ACCEPT\n\r"); //action 2
                         L3_event_setEventFlag(L3_event_dataToSend);
-                        pc.printf("Tried to Send ACCEPT to UE 221.\n");
+                        pc.printf("Tried to Send ACCEPT to UE 221.\n\r");
                     }
                 }
                 else //not condition1
                 {
-                    pc.printf("Unknown signal is coming.\n");
+                    pc.printf("Unknown signal is coming.\n\r");
                 }
                 
                 L3_event_clearEventFlag(L3_event_msgRcvd);
@@ -138,24 +137,24 @@ void L3_FSMrun(void)
                 // debug("[L3] msg length : %i\n", wordLen);
                 // debug_if(DBGMSG_L3, "[L3] sending msg....\n");
                 //wordLen = 0;
-                pc.printf("check data"); // 여기 동작함 한 번!
+                pc.printf("check data\n\r"); // 여기 동작함 한 번!
 
                 //PDU 기본값으로 셋팅
-                strcpy((char*) originalWord, "Sending DATA\n");
+                strcpy((char*) originalWord, "Sending DATA\n\r");
                 
                 L3_event_clearEventFlag(L3_event_dataToSend);
             }
-            else if (L3_event_checkEventFlag(L3_event_arqTimeout))
+            
+            if (L3_event_checkEventFlag(L3_event_arqTimeout))
             {   
                 // 일정 시간(Timer)마다 PDU(기지국 DATA) 재전송
-                L3_event_setEventFlag(L3_event_dataToSend);
-                // debug_if(DBGMSG_L3, "[L3] sending msg....\n");
-                // wordLen = 0;
-                pc.printf("check time out");    // 동작 안함
+                
+                // L3_timer_stopTimer();
+                pc.printf("check time out\n\r");    // 동작 안함
 
                 // 타이머 재작동
                 L3_timer_startTimer();
-                pc.printf("check timer restart");   // 동작 안함
+                pc.printf("check timer restart\n\r");   // 동작 안함
 
                 L3_event_clearEventFlag(L3_event_arqTimeout);
             }
