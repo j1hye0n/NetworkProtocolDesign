@@ -9,20 +9,22 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <cmath>
+#include <cstdint>
 
 
 //FSM state -------------------------------------------------
 #define L3STATE_IDLE                0
 #define L3STATE_LND                 1
 #define L3STATE_ACK                 2
-#define RSSI_LIMIT                  50
+#define RSSI_LIMIT                  0
 
 //Cell(Base Station) ID
 static uint8_t C_ID[3] = {145, 208, 89};
 static uint8_t my_cell_id = 0;
 static int j = 0;
 static uint8_t rssi[] = {0};
-static uint8_t max_rssi[] = {0};
+static uint8_t max_rssi[] = {100}; // rssi 절댓값 30~100 정도 나옴 -> 작을 수록 신호 큼, 클 수록 신호 작음
 static uint8_t id[] = {0};
 
 //state variables
@@ -70,8 +72,8 @@ void L3_FSMrun(void)
                 {
                     id[i] = L3_LLI_getSrcId();
                     if (id[i] == C_ID[0] || id[i] == C_ID[1] || id[i] == C_ID[2] ){ //condition 1
-                        uint8_t b_rssi = L3_LLI_getRssi();
-                        if (b_rssi >= RSSI_LIMIT){ //condition 2
+                        uint8_t b_rssi = static_cast<uint8_t>(std::abs(static_cast<int>(L3_LLI_getRssi()))); // rssi는 음수값이니까 절댓값 취해야함
+                        if (b_rssi <= RSSI_LIMIT){ //condition 2
                             rssi[i] = b_rssi;
                             i++;
                         }
@@ -87,9 +89,9 @@ void L3_FSMrun(void)
             }
             else
             {
-                for (j=0; j<=i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
+                for (j=0; j<=i ; j++)   // rssi 절댓값이 가장 작은 신호 id[j]구하기 condition 4
                 {
-                    if (rssi[j] >= max_rssi[j]){
+                    if (rssi[j] <= max_rssi[j]){
                         max_rssi[j] = rssi[j];
                     }
                 }
@@ -151,7 +153,7 @@ void L3_FSMrun(void)
             {
                 uint8_t id_L = L3_LLI_getSrcId();
                 if (id_L == my_cell_id){ // condition 3
-                    max_rssi[j] = L3_LLI_getRssi();
+                    max_rssi[j] = static_cast<uint8_t>(std::abs(static_cast<int>(L3_LLI_getRssi())));
                     if(max_rssi[j] >= RSSI_LIMIT) // condition 2
                     {
                         L3_timer_stopTimer(); // timerStatus = 2, 타이머 멈춤
@@ -162,7 +164,7 @@ void L3_FSMrun(void)
                 {
                     if (id_L == C_ID[0] || id_L == C_ID[1] || id_L == C_ID[2]) //condition 1
                     {
-                        uint8_t rssi_L = L3_LLI_getRssi();
+                        uint8_t rssi_L = static_cast<uint8_t>(std::abs(static_cast<int>(L3_LLI_getRssi())));
                         if (rssi_L >= max_rssi[j]) //condition 4
                         {
                         //PDU 생성 "REQUEST"
