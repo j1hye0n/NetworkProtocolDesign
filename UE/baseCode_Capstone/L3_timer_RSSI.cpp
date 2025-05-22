@@ -11,7 +11,7 @@ static uint8_t timerStatus_R = 0;
 void L3_timer_timeoutHandler_R(void) 
 {
     timerStatus_R = 0;
-    //L3_event_setEventFlag(L3_event_arqTimeout);
+    L3_event_setEventFlag(L3_event_arqTimeout);
 }
 
 //timer related functions ---------------------------
@@ -25,7 +25,7 @@ void L3_timer_startTimer_R()
 void L3_timer_stopTimer_R()
 {
     timer_R.detach();
-    timerStatus_R = 2; //timeout 돼서 timerStatus가 자동으로 0이 되는 것과 구분하기 위함
+    timerStatus_R = 0; //timeout 돼서 timerStatus가 자동으로 0이 되는 것과 구분하기 위함
 }
 
 uint8_t L3_timer_getTimerStatus_R()

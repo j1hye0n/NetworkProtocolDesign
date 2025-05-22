@@ -15,14 +15,14 @@
 #define L3STATE_IDLE                0
 #define L3STATE_LND                 1
 #define L3STATE_ACK                 2
-#define RSSI_LIMIT                  50
+#define RSSI_LIMIT                  0 // rssi : -30~-100이라서 실제 기준치는 이 사이값으로 잡아야할 것 같긴한데, 지금은 신호가 들어오는지 확인해야 하니까 0으로 둘게
 
 //Cell(Base Station) ID
 static uint8_t C_ID[3] = {145, 208, 89};
 static uint8_t my_cell_id = 0;
 static int j = 0;
 static uint8_t rssi[] = {0};
-static uint8_t max_rssi[] = {0};
+static uint8_t max_rssi[] = {100};
 static uint8_t id[] = {0};
 
 //state variables
@@ -62,34 +62,46 @@ void L3_FSMrun(void)
     {
         case L3STATE_IDLE: {//IDLE state description
             int i=0;
-            L3_timer_startTimer_R(); 
             
-            while (!L3_timer_getTimerStatus_R()) 
+            // RSSI timer로 일정시간동안 들어온 신호들의 세기를 비교해서 고르는 코드
+            if (!L3_timer_getTimerStatus_R())
+            {
+                L3_timer_startTimer_R(); 
+            }
+            
+            while (L3_timer_getTimerStatus_R()) 
             {
                if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens
                 {
                     id[i] = L3_LLI_getSrcId();
                     if (id[i] == C_ID[0] || id[i] == C_ID[1] || id[i] == C_ID[2] ){ //condition 1
-                        uint8_t b_rssi = L3_LLI_getRssi();
+                        uint8_t b_rssi = static_cast<uint8_t>(std::abs(static_cast<int>(L3_LLI_getRssi()))); // rssi는 음수니까 절댓값 취함
+                        pc.printf("Id : %i rssi : %i",id[i], b_rssi); //출력 test
                         if (b_rssi >= RSSI_LIMIT){ //condition 2
                             rssi[i] = b_rssi;
                             i++;
+                            pc.printf("%i",rssi[i]); //rssi[i] 업데이트 확인
                         }
                     }
                 }
-
                 L3_event_clearEventFlag(L3_event_msgRcvd);
+
+                if (L3_event_checkEventFlag(L3_event_arqTimeout))
+                {
+                    L3_event_clearEventFlag(L3_event_arqTimeout);
+                    break;
+                }
             }
 
             if (i == 0 || rssi[0] == 0) // 여기가 영원히 반복됨.. 왜일까..?
             {
-                pc.printf("There is no signal.\n");
+                pc.printf("There is no signal.\n\r");
             }
             else
             {
                 for (j=0; j<=i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
                 {
-                    if (rssi[j] >= max_rssi[j]){
+                    if (rssi[j] <= max_rssi[j]){ // 절댓값이 작을 수록 큰 신호니까 max(=100) 이하로 코드 바꿈
                         max_rssi[j] = rssi[j];
                     }
                 }
@@ -101,7 +113,7 @@ void L3_FSMrun(void)
             {
                 //PDU 생성 "REQUEST"
                 //msg header setting
-                strcpy((char*) originalWord, "REQUEST\n");
+                strcpy((char*) originalWord, "REQUEST\n\r");
                 strcpy((char*) sdu, (char*) originalWord);
                 L3_LLI_dataReqFunc(sdu, 200, myDestId);
 
@@ -117,13 +129,16 @@ void L3_FSMrun(void)
 
         case L3STATE_ACK:{
 
-            L3_timer_startTimer_A(); // ACCEPT 기다리는 타이머 실행
+            if (!L3_timer_getTimerStatus_A())
+            {
+                L3_timer_startTimer_A(); // ACCEPT 기다리는 타이머 실행
+            }
             
             if(L3_event_checkEventFlag(L3_event_msgRcvd)) // ACCEPT 수신하면
             {
                 //Retrieving data info.
                 uint8_t* dataPtr = L3_LLI_getMsgPtr();
-                if (strcmp((char*) dataPtr, "ACCEPT") == 0)
+                if (strcmp((char*) dataPtr, "ACCEPT\n\r") == 0)
                 {
                     // 최근 선택한 기지국 ID 저장
                     my_cell_id = myDestId;
@@ -132,9 +147,10 @@ void L3_FSMrun(void)
                     L3_timer_stopTimer_A(); // 타이머 중지
                     main_state = L3STATE_LND;
                 }
-                else if (!L3_timer_getTimerStatus_A()) // 타이머 터지면 IDLE 상태로 감
+                else if (L3_event_checkEventFlag(L3_event_arqTimeout)) // 타이머 터지면 IDLE 상태로 감
                 {
                     main_state = L3STATE_IDLE;
+                    L3_event_clearEventFlag(L3_event_arqTimeout);
                 }
             }
             
@@ -143,15 +159,16 @@ void L3_FSMrun(void)
         
         case L3STATE_LND:{
 
-            if (!L3_timer_getTimerStatus()) // timerstatus = 0 (즉, 타이머 작동 X)
+            if (!L3_timer_getTimerStatus())
             {
-                main_state = L3STATE_IDLE; 
+                L3_timer_startTimer();
             }
-            else if (L3_event_checkEventFlag(L3_event_msgRcvd)) //PDU 수신 Event 1
+            
+            if (L3_event_checkEventFlag(L3_event_msgRcvd)) //PDU 수신 Event 1
             {
                 uint8_t id_L = L3_LLI_getSrcId();
                 if (id_L == my_cell_id){ // condition 3
-                    max_rssi[j] = L3_LLI_getRssi();
+                    max_rssi[j] = static_cast<uint8_t>(std::abs(static_cast<int>(L3_LLI_getRssi()))); // rssi 절댓값 취함
                     if(max_rssi[j] >= RSSI_LIMIT) // condition 2
                     {
                         L3_timer_stopTimer(); // timerStatus = 2, 타이머 멈춤
@@ -162,13 +179,15 @@ void L3_FSMrun(void)
                 {
                     if (id_L == C_ID[0] || id_L == C_ID[1] || id_L == C_ID[2]) //condition 1
                     {
-                        uint8_t rssi_L = L3_LLI_getRssi();
-                        if (rssi_L >= max_rssi[j]) //condition 4
+                        uint8_t rssi_L = static_cast<uint8_t>(std::abs(static_cast<int>(L3_LLI_getRssi()))); // rssi 절댓값 취함
+                        pc.printf("%i",rssi_L);
+                        
+                        if (rssi_L <= max_rssi[j]) //condition 4
                         {
-                        //PDU 생성 "REQUEST"
-                        strcpy((char*) originalWord, "REQUEST\n");
-                        myDestId = id_L;
-                        L3_event_setEventFlag(L3_event_dataToSend);
+                            //PDU 생성 "REQUEST"
+                            strcpy((char*) originalWord, "REQUEST\n\r");
+                            myDestId = id_L;
+                            L3_event_setEventFlag(L3_event_dataToSend);
                         }
                     }
                 }
@@ -183,6 +202,13 @@ void L3_FSMrun(void)
                 main_state = L3STATE_ACK;
                 
                 L3_event_clearEventFlag(L3_event_dataToSend);
+            }
+
+            if (L3_event_checkEventFlag(L3_event_arqTimeout))
+            {
+                main_state = L3STATE_IDLE;
+                
+                L3_event_clearEventFlag(L3_event_arqTimeout);
             }
             
             break;

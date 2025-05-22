@@ -20,7 +20,7 @@ static uint8_t prev_state = main_state;
 
 //source/destination ID
 static uint8_t myL2ID=221;
-static uint8_t destL2ID=255;
+static uint8_t destL2ID=145;
 
 //L2 PDU context/size
 static uint8_t sduBuffer[SDUBUFFER_SIZE];
@@ -128,7 +128,7 @@ void L2_LLI_reconfigSrcId(uint8_t myId)
 void L2_initFSM(uint8_t myId)
 {
     myL2ID = myId;
-    destL2ID = 255; 
+    destL2ID = 0; 
 
     L2_event_clearAllEventFlag();
 
