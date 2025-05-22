@@ -17,7 +17,7 @@ void L3_timer_timeoutHandler_R(void)
 //timer related functions ---------------------------
 void L3_timer_startTimer_R()
 {
-    uint8_t waitTime_R = 5;//L2_ARQ_MINWAITTIME + rand()%(L2_ARQ_MAXWAITTIME-L2_ARQ_MINWAITTIME); //timer length
+    uint8_t waitTime_R = 7;//L2_ARQ_MINWAITTIME + rand()%(L2_ARQ_MAXWAITTIME-L2_ARQ_MINWAITTIME); //timer length
     timer_R.attach(L3_timer_timeoutHandler_R, waitTime_R);
     timerStatus_R = 1;
 }
