@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <cstdlib>
 
 
 //FSM state -------------------------------------------------
@@ -21,12 +22,12 @@
 static uint8_t C_ID[3] = {145, 208, 89};
 static uint8_t my_cell_id = 0;
 static int j = 0;
-static uint8_t rssi[] = {0};
-static uint8_t max_rssi[] = {100};
-static uint8_t id[] = {0};
+static int16_t rssi[100];
+static int16_t max_rssi;
+static uint8_t id[100];
 
 //state variables
-static uint8_t main_state = L3STATE_IDLE; //protocol state
+static uint8_t main_state = L3STATE_IDLE; //rotocol state
 static uint8_t prev_state = main_state;
 
 //SDU (input)
@@ -69,23 +70,23 @@ void L3_FSMrun(void)
                 L3_timer_startTimer_R(); 
             }
             
-            while (L3_timer_getTimerStatus_R()) 
+            while (1) 
             {
                if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens
                 {
                     id[i] = L3_LLI_getSrcId();
                     if (id[i] == C_ID[0] || id[i] == C_ID[1] || id[i] == C_ID[2] ){ //condition 1
-                        uint8_t b_rssi = static_cast<uint8_t>(std::abs(static_cast<int>(L3_LLI_getRssi()))); // rssi는 음수니까 절댓값 취함
-                        pc.printf("Id : %i rssi : %i",id[i], b_rssi); //출력 test
+                        int16_t b_rssi = (L3_LLI_getRssi());
+                        pc.printf("Id : %i rssi : %u\n",id[i], b_rssi); //출력 test
                         if (b_rssi >= RSSI_LIMIT){ //condition 2
                             rssi[i] = b_rssi;
                             i++;
-                            pc.printf("%i",rssi[i]); //rssi[i] 업데이트 확인
                         }
                     }
+                    
+                    L3_event_clearEventFlag(L3_event_msgRcvd);
                 }
-                L3_event_clearEventFlag(L3_event_msgRcvd);
-
+                
                 if (L3_event_checkEventFlag(L3_event_arqTimeout))
                 {
                     L3_event_clearEventFlag(L3_event_arqTimeout);
@@ -101,8 +102,9 @@ void L3_FSMrun(void)
             {
                 for (j=0; j<=i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
                 {
-                    if (rssi[j] <= max_rssi[j]){ // 절댓값이 작을 수록 큰 신호니까 max(=100) 이하로 코드 바꿈
-                        max_rssi[j] = rssi[j];
+                    if (rssi[j] >= max_rssi)
+                    {
+                        max_rssi = rssi[j];
                     }
                 }
                 myDestId = id[j];
@@ -168,8 +170,8 @@ void L3_FSMrun(void)
             {
                 uint8_t id_L = L3_LLI_getSrcId();
                 if (id_L == my_cell_id){ // condition 3
-                    max_rssi[j] = static_cast<uint8_t>(std::abs(static_cast<int>(L3_LLI_getRssi()))); // rssi 절댓값 취함
-                    if(max_rssi[j] >= RSSI_LIMIT) // condition 2
+                    max_rssi = (L3_LLI_getRssi()); // rssi 절댓값 취함
+                    if(max_rssi >= RSSI_LIMIT) // condition 2
                     {
                         L3_timer_stopTimer(); // timerStatus = 2, 타이머 멈춤
                         L3_timer_startTimer(); // 타이머 재시작
@@ -179,10 +181,10 @@ void L3_FSMrun(void)
                 {
                     if (id_L == C_ID[0] || id_L == C_ID[1] || id_L == C_ID[2]) //condition 1
                     {
-                        uint8_t rssi_L = static_cast<uint8_t>(std::abs(static_cast<int>(L3_LLI_getRssi()))); // rssi 절댓값 취함
+                        int16_t rssi_L = (L3_LLI_getRssi()); // rssi 절댓값 취함
                         pc.printf("%i",rssi_L);
                         
-                        if (rssi_L <= max_rssi[j]) //condition 4
+                        if (rssi_L <= max_rssi) //condition 4
                         {
                             //PDU 생성 "REQUEST"
                             strcpy((char*) originalWord, "REQUEST\n\r");
