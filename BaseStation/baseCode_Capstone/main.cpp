@@ -11,7 +11,7 @@ Serial pc(USBTX, USBRX);
 
 //source/destination ID
 uint8_t input_thisId=145;
-uint8_t input_destId=255;
+uint8_t input_destId=221;
 
 //FSM operation implementation ------------------------------------------------
 int main(void){

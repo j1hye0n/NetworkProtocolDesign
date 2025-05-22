@@ -12,13 +12,13 @@ static uint8_t timerStatus = 0;
 void L3_timer_timeoutHandler(void) 
 {
     timerStatus = 0;
-    //L3_event_setEventFlag(L3_event_arqTimeout);
+    L3_event_setEventFlag(L3_event_arqTimeout);
 }
 
 //timer related functions ---------------------------
 void L3_timer_startTimer()
 {
-    uint8_t waitTime = 3;//L2_ARQ_MINWAITTIME + rand()%(L2_ARQ_MAXWAITTIME-L2_ARQ_MINWAITTIME); //timer length
+    uint8_t waitTime = L2_ARQ_MINWAITTIME + rand()%(L2_ARQ_MAXWAITTIME-L2_ARQ_MINWAITTIME); //timer length // 길다란 수식 = waittime 10~49 사이 무작위 지정
     timer.attach(L3_timer_timeoutHandler, waitTime);
     timerStatus = 1;
 }
