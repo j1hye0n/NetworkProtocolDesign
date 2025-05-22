@@ -81,7 +81,7 @@ void L3_FSMrun(void)
                 L3_event_clearEventFlag(L3_event_msgRcvd);
             }
 
-            if (i == 0 || rssi[0] == 0)
+            if (i == 0 || rssi[0] == 0) // 여기가 영원히 반복됨.. 왜일까..?
             {
                 pc.printf("There is no signal.\n");
             }

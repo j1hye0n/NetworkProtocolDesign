@@ -19,8 +19,8 @@ static uint8_t main_state = L2STATE_IDLE; //protocol state
 static uint8_t prev_state = main_state;
 
 //source/destination ID
-static uint8_t myL2ID=1;
-static uint8_t destL2ID=0;
+static uint8_t myL2ID=221;
+static uint8_t destL2ID=255;
 
 //L2 PDU context/size
 static uint8_t sduBuffer[SDUBUFFER_SIZE];
@@ -128,7 +128,7 @@ void L2_LLI_reconfigSrcId(uint8_t myId)
 void L2_initFSM(uint8_t myId)
 {
     myL2ID = myId;
-    destL2ID = 0; 
+    destL2ID = 255; 
 
     L2_event_clearAllEventFlag();
 
@@ -301,7 +301,7 @@ void L2_FSMrun(void)
                     if (destL2ID == L2_BROADCAST_ID)
                     {
                         main_state = L2STATE_IDLE;
-                         L3_LLI_dataCnf(1);
+                        L3_LLI_dataCnf(1);
                     }
                     else
                     {
