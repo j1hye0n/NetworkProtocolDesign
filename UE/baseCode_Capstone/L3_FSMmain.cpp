@@ -16,14 +16,14 @@
 #define L3STATE_IDLE                0
 #define L3STATE_LND                 1
 #define L3STATE_ACK                 2
-#define RSSI_LIMIT                  0 // rssi : -30~-100이라서 실제 기준치는 이 사이값으로 잡아야할 것 같긴한데, 지금은 신호가 들어오는지 확인해야 하니까 0으로 둘게
+#define RSSI_LIMIT                  0 // 200 정도
 
 //Cell(Base Station) ID
 static uint8_t C_ID[3] = {145, 208, 89};
 static uint8_t my_cell_id = 0;
-static int j = 0;
+static int max_i = 0;
 static int16_t rssi[100];
-static int16_t max_rssi;    // 
+static int16_t max_rssi = 0;
 static uint8_t id[100];
 
 //state variables
@@ -70,14 +70,14 @@ void L3_FSMrun(void)
                 L3_timer_startTimer_R(); 
             }
             
-            while (1) 
+            while (!L3_event_checkEventFlag(L3_event_arqTimeout))
             {
-               if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens
+                if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens
                 {
                     id[i] = L3_LLI_getSrcId();
                     if (id[i] == C_ID[0] || id[i] == C_ID[1] || id[i] == C_ID[2] ){ //condition 1
-                        int16_t b_rssi = (L3_LLI_getRssi());
-                        pc.printf("Id : %i rssi : %u\n",id[i], b_rssi); //출력 test
+                        int16_t b_rssi = L3_LLI_getRssi();
+                        pc.printf("Id : %i rssi : %u\n\r",id[i], b_rssi); //출력 test
                         if (b_rssi >= RSSI_LIMIT){ //condition 2
                             rssi[i] = b_rssi;
                             i++;
@@ -86,28 +86,24 @@ void L3_FSMrun(void)
                     
                     L3_event_clearEventFlag(L3_event_msgRcvd);
                 }
-                
-                if (L3_event_checkEventFlag(L3_event_arqTimeout))
-                {
-                    L3_event_clearEventFlag(L3_event_arqTimeout);
-                    break;
-                }
             }
+            L3_event_clearEventFlag(L3_event_arqTimeout);
 
-            if (i == 0 || rssi[0] == 0) // 여기가 영원히 반복됨.. 왜일까..?
+            if (i == 0 || rssi[0] == 0)
             {
                 pc.printf("There is no signal.\n\r");
             }
             else
             {
-                for (j=0; j<=i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
+                for (int j=0; j<=i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
                 {
                     if (rssi[j] >= max_rssi)
                     {
                         max_rssi = rssi[j];
+                        max_i = j;
                     }
                 }
-                myDestId = id[j];
+                myDestId = id[max_i];
                 L3_event_setEventFlag(L3_event_dataToSend);
             }
             
@@ -119,8 +115,11 @@ void L3_FSMrun(void)
                 strcpy((char*) sdu, (char*) originalWord);
                 L3_LLI_dataReqFunc(sdu, 200, myDestId);
 
+                pc.printf("Tried to Request.\n\r");
+
                 std::memset(rssi, 0, sizeof(rssi));     // rssi값 전부 초기화
 
+                L3_timer_stopTimer_R();
                 main_state = L3STATE_ACK;
                     
                 L3_event_clearEventFlag(L3_event_dataToSend);
@@ -142,6 +141,7 @@ void L3_FSMrun(void)
                 uint8_t* dataPtr = L3_LLI_getMsgPtr();
                 if (strcmp((char*) dataPtr, "ACCEPT\n\r") == 0)
                 {
+                    pc.printf("Base sent ACCEPT\n\r");
                     // 최근 선택한 기지국 ID 저장
                     my_cell_id = myDestId;
                     
@@ -149,8 +149,12 @@ void L3_FSMrun(void)
                     L3_timer_stopTimer_A(); // 타이머 중지
                     main_state = L3STATE_LND;
                 }
-                else if (L3_event_checkEventFlag(L3_event_arqTimeout)) // 타이머 터지면 IDLE 상태로 감
+                
+                if (L3_event_checkEventFlag(L3_event_arqTimeout)) // 타이머 터지면 IDLE 상태로 감
                 {
+                    pc.printf("Base don't ACCEPT\n\r");
+                    
+                    L3_timer_stopTimer_A();
                     main_state = L3STATE_IDLE;
                     L3_event_clearEventFlag(L3_event_arqTimeout);
                 }
@@ -163,6 +167,7 @@ void L3_FSMrun(void)
 
             if (!L3_timer_getTimerStatus())
             {
+                pc.printf("Connected!\n\r");
                 L3_timer_startTimer();
             }
             
@@ -170,7 +175,8 @@ void L3_FSMrun(void)
             {
                 uint8_t id_L = L3_LLI_getSrcId();
                 if (id_L == my_cell_id){ // condition 3
-                    max_rssi = (L3_LLI_getRssi()); // rssi 절댓값 취함
+                    max_rssi = L3_LLI_getRssi(); // rssi 절댓값 취함
+
                     if(max_rssi >= RSSI_LIMIT) // condition 2
                     {
                         L3_timer_stopTimer(); // timerStatus = 2, 타이머 멈춤
@@ -181,15 +187,16 @@ void L3_FSMrun(void)
                 {
                     if (id_L == C_ID[0] || id_L == C_ID[1] || id_L == C_ID[2]) //condition 1
                     {
-                        int16_t rssi_L = (L3_LLI_getRssi()); // rssi 절댓값 취함
+                        int16_t rssi_L = L3_LLI_getRssi(); // rssi 절댓값 취함
                         pc.printf("%i",rssi_L);
                         
-                        if (rssi_L <= max_rssi) //condition 4
+                        if (rssi_L >= max_rssi) //condition 4
                         {
                             //PDU 생성 "REQUEST"
                             strcpy((char*) originalWord, "REQUEST\n\r");
                             myDestId = id_L;
                             L3_event_setEventFlag(L3_event_dataToSend);
+                            pc.printf("Send REQUEST to New Base.\n\r");
                         }
                     }
                 }
@@ -201,6 +208,7 @@ void L3_FSMrun(void)
                 strcpy((char*) sdu, (char*) originalWord);
                 L3_LLI_dataReqFunc(sdu, 200, myDestId);
 
+                L3_timer_stopTimer();
                 main_state = L3STATE_ACK;
                 
                 L3_event_clearEventFlag(L3_event_dataToSend);
@@ -208,6 +216,9 @@ void L3_FSMrun(void)
 
             if (L3_event_checkEventFlag(L3_event_arqTimeout))
             {
+                pc.printf("Base signal is unstable.\n\r");
+
+                L3_timer_stopTimer();
                 main_state = L3STATE_IDLE;
                 
                 L3_event_clearEventFlag(L3_event_arqTimeout);
