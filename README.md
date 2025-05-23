@@ -30,4 +30,10 @@
 
 # 연구 일지
 > 05/13(화) : 연구 계획, 코드 협업 방법 확정, base code 공유
+>
 > 05/16(금) : base station code L3FSM_main code
+> 
+> 05/20(화) : UE code L3FSM_main code
+> 
+> 05/22(목) : base station, UE 연결. L2_FSMmain 등 연결에 필요한 디버깅 진행. - UE&BaseStation 연결 완, Request, Accept handshaking 동작 수행, timer 조정 및 여러 기지국 사용 후 재실험 필요
+> 
