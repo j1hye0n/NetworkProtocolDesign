@@ -99,6 +99,7 @@ void L3_FSMrun(void)
 
             if (L3_event_checkEventFlag(L3_event_arqTimeout))
             {
+                pc.printf("IDLE is TIME OUT!\n\r");
                 for (int j=0; j<i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
                 {
                     if (rssi[j] > max_rssi)
@@ -116,6 +117,7 @@ void L3_FSMrun(void)
                 {
                     myDestId = id[max_i];
                     L3_event_setEventFlag(L3_event_dataToSend);
+                    max_i = -1;
                 }
 
                 L3_event_clearEventFlag(L3_event_arqTimeout);
@@ -133,6 +135,7 @@ void L3_FSMrun(void)
                 pc.printf("Tried Request to %i.\n\r", myDestId);
 
                 i = 0;
+                std::memset(id, 0, sizeof(id));     // rssi값 전부 초기화
                 std::memset(rssi, 0, sizeof(rssi));     // rssi값 전부 초기화
 
                 L3_timer_stopTimer_R();
@@ -142,18 +145,20 @@ void L3_FSMrun(void)
                 L3_event_clearEventFlag(L3_event_dataToSend);
         
             }
+
             break;
         }
     
-
         case L3STATE_ACK:{
             if (!L3_timer_getTimerStatus_A()) 
             {
                 L3_timer_startTimer_A(); // ACCEPT 기다리는 타이머 실행(5초) --> 이게 지금 안돌아가는 거 아니야..??
                 pc.printf("ACK timer start\n\r");
+
+                
             }
             
-            if(L3_event_checkEventFlag(L3_event_msgRcvd)) // ACCEPT 수신하면
+            if (L3_event_checkEventFlag(L3_event_msgRcvd)) // ACCEPT 수신하면
             {
                 //Retrieving data info.
                 uint8_t* dataPtr = L3_LLI_getMsgPtr();
@@ -170,6 +175,7 @@ void L3_FSMrun(void)
                     main_state = L3STATE_LND;
                 }
             }
+            
             if (L3_event_checkEventFlag(L3_event_arqTimeout)) // 타이머 터지면 IDLE 상태로 감
             {
                 pc.printf("Base don't ACCEPT\n\r");
@@ -177,6 +183,7 @@ void L3_FSMrun(void)
                 // L3_timer_stopTimer_A();
                 main_state = L3STATE_IDLE;
                 L3_event_clearEventFlag(L3_event_arqTimeout);
+
             }
             
             break;
@@ -221,7 +228,8 @@ void L3_FSMrun(void)
 
                 L3_event_clearEventFlag(L3_event_msgRcvd);
             }
-            else if (L3_event_checkEventFlag(L3_event_dataToSend))
+            
+            if (L3_event_checkEventFlag(L3_event_dataToSend))
             {
                 strcpy((char*) sdu, (char*) originalWord);
                 L3_LLI_dataReqFunc(sdu, 200, myDestId);
