@@ -20,7 +20,7 @@ static uint8_t prev_state = main_state;
 
 //source/destination ID
 static uint8_t myL2ID=145;
-static uint8_t destL2ID=221;
+static uint8_t destL2ID=255;
 
 //L2 PDU context/size
 static uint8_t sduBuffer[SDUBUFFER_SIZE];
@@ -79,7 +79,7 @@ int L2_pullSduBuffer(uint8_t size)
 
     memcpy(sduIn, sduBuffer, size);
     sduLen = size;
-
+    debug("[L2] pulling data bits from SDU buffer (bitsize : %i, remained size : %i)\n", size, sduBufferSize-size);
 
     sduBufferSize -= size;
     if (sduBufferSize > 0)
@@ -128,7 +128,7 @@ void L2_LLI_reconfigSrcId(uint8_t myId)
 void L2_initFSM(uint8_t myId)
 {
     myL2ID = myId;
-    destL2ID = 221; 
+    destL2ID = 0; 
 
     L2_event_clearAllEventFlag();
 
@@ -193,13 +193,13 @@ void L2_FSMrun(void)
                 uint8_t brflag = L2_LLI_getIsBroadcasted();
                 uint8_t flag_end = L2_msg_checkIfEndData(dataPtr);
 
-                L3_LLI_dataInd(L2_msg_getWord(dataPtr), srcId, size-L2_MSG_OFFSET_DATA, L2_LLI_getSnr(), L2_LLI_getRssi());
-// #ifndef DISABLE_ARQ                
-                // if (brflag == 0 && seqNum != L2_msg_getSeq(dataPtr))
-                    // debug("[L3][WARNING] Invalid PDU SN (%i) while (%i) is required! discarding it...\n", L2_msg_getSeq(dataPtr), seqNum);
-                // else
-// #endif
-                    // L2_aggregateData(dataPtr, srcId, size, brflag, flag_end);
+                // L3_LLI_dataInd(L2_msg_getWord(dataPtr), srcId, size-L2_MSG_OFFSET_DATA, L2_LLI_getSnr(), L2_LLI_getRssi());
+#ifndef DISABLE_ARQ                
+                if (brflag == 0 && seqNum != L2_msg_getSeq(dataPtr))
+                    debug("[L3][WARNING] Invalid PDU SN (%i) while (%i) is required! discarding it...\n", L2_msg_getSeq(dataPtr), seqNum);
+                else
+#endif
+                    L2_aggregateData(dataPtr, srcId, size, brflag, flag_end);
 
 
 #ifdef DISABLE_ARQ
@@ -342,8 +342,8 @@ void L2_FSMrun(void)
                     debug("[L2][WARNING] Failed to send data %i, max retx cnt reached! \n", L2_msg_getSeq(arqPdu));
                     main_state = L2STATE_IDLE;
                     L3_LLI_dataCnf(0);
-                    //arqPdu clear
-                    //retxCnt clear
+                    // rqPdu clear
+                    // etxCnt clear
                 }
                 else //retx < max, then goto TX for retransmission
                 {
@@ -365,13 +365,13 @@ void L2_FSMrun(void)
                 uint8_t brflag = L2_LLI_getIsBroadcasted();
                 uint8_t flag_end = L2_msg_checkIfEndData(dataPtr);
 
-                L3_LLI_dataInd(L2_msg_getWord(dataPtr), srcId, size-L2_MSG_OFFSET_DATA, L2_LLI_getSnr(), L2_LLI_getRssi());
-// #ifndef DISABLE_ARQ                
-                // if (brflag == 0 && seqNum != L2_msg_getSeq(dataPtr))
-                    // debug("[L3][WARNING] Invalid PDU SN (%i) while (%i) is required! discarding it...\n", L2_msg_getSeq(dataPtr), seqNum);
-                // else
-// #endif
-                    // L2_aggregateData(dataPtr, srcId, size, brflag, flag_end);            
+                // L3_LLI_dataInd(L2_msg_getWord(dataPtr), srcId, size-L2_MSG_OFFSET_DATA, L2_LLI_getSnr(), L2_LLI_getRssi());
+#ifndef DISABLE_ARQ                
+                if (brflag == 0 && seqNum != L2_msg_getSeq(dataPtr))
+                    debug("[L3][WARNING] Invalid PDU SN (%i) while (%i) is required! discarding it...\n", L2_msg_getSeq(dataPtr), seqNum);
+                else
+#endif
+                    L2_aggregateData(dataPtr, srcId, size, brflag, flag_end);            
 
 #ifdef DISABLE_ARQ
                 main_state = L2STATE_IDLE;
