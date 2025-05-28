@@ -30,6 +30,8 @@ static uint8_t id[100];
 static int i = 0;
 static int16_t b_rssi;
 static int16_t rssi_L;
+static uint8_t id_L;
+static int16_t rssi_m;
 
 
 //state variables
@@ -207,12 +209,14 @@ void L3_FSMrun(void)
 
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) //PDU 수신 Event 1
             {
-                uint8_t id_L = L3_LLI_getSrcId();
+                id_L = L3_LLI_getSrcId();
                 if (id_L == my_cell_id){ // condition 3
-                    max_rssi = L3_LLI_getRssi(); 
+                    rssi_m = L3_LLI_getRssi(); 
 
-                    if(max_rssi > RSSI_LIMIT) // condition 2
+                    if(rssi_m > RSSI_LIMIT) // condition 2
                     {
+                        max_rssi = rssi_m;
+                        pc.printf("max_rssi : %i, rssi_M > RSSI_LIMIT = %i\n", max_rssi, rssi_m > RSSI_LIMIT);
                         L3_timer_stopTimer(); // 타이머 멈춤
                         L3_timer_startTimer(); // 타이머 재시작
                     }
@@ -224,6 +228,7 @@ void L3_FSMrun(void)
                         rssi_L = L3_LLI_getRssi();                   
                         if (rssi_L > max_rssi) //condition 4
                         { 
+                            pc.printf("rssi_L : %i\n", rssi_L);
                             pc.printf("New Base is detected! %i, rssi : %i\n\r", id_L, rssi_L);
 
                             //PDU 생성 "REQUEST"
