@@ -97,7 +97,7 @@ void L3_FSMrun(void)
                 L3_timer_startTimer();
             }
 
-            if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens (event a)
+            else if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens (event a)
             {
                 //Retrieving data info.
                 uint8_t* dataPtr = L3_LLI_getMsgPtr();
@@ -127,7 +127,7 @@ void L3_FSMrun(void)
                 L3_event_clearEventFlag(L3_event_msgRcvd);
             }
             //else if 안의 내용은 initFSM & case IDLE에 옮김
-            if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent
+            else if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent
             {
                 uint8_t len = strlen(originalWord);
                 //msg header setting
@@ -144,7 +144,7 @@ void L3_FSMrun(void)
                 L3_event_clearEventFlag(L3_event_dataToSend);
             }
             
-            if (L3_event_checkEventFlag(L3_event_arqTimeout))
+            else if (L3_event_checkEventFlag(L3_event_arqTimeout))
             {   
                 // 일정 시간(Timer)마다 PDU(기지국 DATA) 재전송
                 // L3_timer_stopTimer();
