@@ -86,23 +86,12 @@ void L3_FSMrun(void)
     switch (main_state)
     {
         case L3STATE_IDLE: //IDLE state description
-
-            // 주기적 DATA 송신을 위한 timer 작동
-            // 처음 PDU 셋팅
-            if (!L3_timer_getTimerStatus())
-            {
-                pc.printf("sending data , %i\n",L3_timer_getTimerStatus());
-                strcpy((char*) originalWord, "Sending DATA\n\r");
-                L3_event_setEventFlag(L3_event_dataToSend);
-                L3_timer_startTimer();
-            }
-
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens (event a)
             {
                 //Retrieving data info.
                 uint8_t* dataPtr = L3_LLI_getMsgPtr();
                 // uint8_t size = L3_LLI_getSize();
-                uint8_t rssi = L3_LLI_getRssi();    //Rssi&ID variables are added date.05/13
+                // uint8_t rssi = L3_LLI_getRssi();    //Rssi&ID variables are added date.05/13
                 uint8_t srcId = L3_LLI_getSrcId();
 
                 // debug("\n -------------------------------------------------\nRCVD MSG : %s (length:%i)\n -------------------------------------------------\n", 
@@ -115,6 +104,7 @@ void L3_FSMrun(void)
                         pc.printf("Request from UE 221 to be connected.\n\r");
 
                         strcpy((char*) originalWord, "ACCEPT\n\r"); //action 2
+                        myDestId = srcId;
                         L3_event_setEventFlag(L3_event_dataToSend);
                         pc.printf("Tried to Send ACCEPT to UE 221.\n\r");
                     }
@@ -127,7 +117,7 @@ void L3_FSMrun(void)
                 L3_event_clearEventFlag(L3_event_msgRcvd);
             }
             //else if 안의 내용은 initFSM & case IDLE에 옮김
-            if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent
+            else if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent
             {
                 uint8_t len = strlen(originalWord);
                 //msg header setting
@@ -140,6 +130,7 @@ void L3_FSMrun(void)
 
                 //PDU 기본값으로 셋팅
                 strcpy((char*) originalWord, "Sending DATA\n\r");
+                myDestId = 255;
                 
                 L3_event_clearEventFlag(L3_event_dataToSend);
             }
@@ -153,6 +144,15 @@ void L3_FSMrun(void)
                 L3_timer_startTimer();
 
                 L3_event_clearEventFlag(L3_event_arqTimeout);
+            }
+            else if (!L3_timer_getTimerStatus())
+            {
+                // 주기적 DATA 송신을 위한 timer 작동
+                // 처음 PDU 셋팅
+                pc.printf("sending data , %i\n",L3_timer_getTimerStatus());
+                strcpy((char*) originalWord, "Sending DATA\n\r");
+                L3_event_setEventFlag(L3_event_dataToSend);
+                L3_timer_startTimer();
             }
             break;
 
