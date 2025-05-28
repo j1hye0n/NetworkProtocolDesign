@@ -9,7 +9,7 @@ static uint8_t rcvdSize;
 static int16_t rcvdRssi;
 static int8_t rcvdSnr;
 static uint8_t rcvdSrcId;
-static uint8_t rssi;
+// static uint8_t rssi;
 
 //Downward primitives
 //TX function
@@ -56,7 +56,7 @@ uint8_t L3_LLI_getSrcId()
     return rcvdSrcId;
 }
 
-uint8_t L3_LLI_getRssi()
+int16_t L3_LLI_getRssi()
 {
     return rcvdRssi;
 }

@@ -71,11 +71,11 @@ int L2_pullSduBuffer(uint8_t size)
 {
     int res;
 
-    if (size > sduBufferSize)
-    {
-        debug_if(DBGMSG_L2, "[L2][WARNING] sdu buffer size (%i) is less than request size (%i), truncating the requested size...\n", sduBufferSize, size);
-        size = sduBufferSize;
-    }
+    // if (size > sduBufferSize)
+    // {
+    //     debug_if(DBGMSG_L2, "[L2][WARNING] sdu buffer size (%i) is less than request size (%i), truncating the requested size...\n", sduBufferSize, size);
+    //     size = sduBufferSize;
+    // }
 
     memcpy(sduIn, sduBuffer, size);
     sduLen = size;
