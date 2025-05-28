@@ -15,7 +15,7 @@ static uint8_t main_state = L3STATE_IDLE; //protocol state
 static uint8_t prev_state = main_state;
 
 //SDU (input)
-static uint8_t* originalWord[1030];
+static char originalWord[1030];
 static uint8_t wordLen = 0;
 
 static uint8_t sdu[1030];
@@ -91,10 +91,10 @@ void L3_FSMrun(void)
             // 처음 PDU 셋팅
             if (!L3_timer_getTimerStatus())
             {
-                strcpy((char*) originalWord, "Sending DATA\0");
+                pc.printf("sending data , %i\n",L3_timer_getTimerStatus());
+                strcpy((char*) originalWord, "Sending DATA\n\r");
                 L3_event_setEventFlag(L3_event_dataToSend);
                 L3_timer_startTimer();
-                // pc.printf("sending data\n");
             }
 
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens (event a)
@@ -127,13 +127,14 @@ void L3_FSMrun(void)
                 L3_event_clearEventFlag(L3_event_msgRcvd);
             }
             //else if 안의 내용은 initFSM & case IDLE에 옮김
-            else if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent
+            if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent
             {
+                uint8_t len = strlen(originalWord);
                 //msg header setting
                 strcpy((char*) sdu, (char*) originalWord);
                 //L2에 data Request
-                L3_LLI_dataReqFunc(sdu, 200, myDestId);
-                // debug("[L3] msg length : %i\n", wordLen);
+                L3_LLI_dataReqFunc(sdu, len+1, myDestId);
+                debug("[L3] msg length : %i\n", wordLen);
                 // debug_if(DBGMSG_L3, "[L3] sending msg....\n");
                 //wordLen = 0;
 
