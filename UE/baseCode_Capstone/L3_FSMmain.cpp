@@ -27,15 +27,16 @@ static int16_t rssi[100];
 static int16_t max_rssi = -100;
 static uint8_t id[100];
 static int i = 0;
-static int16_t RSSI_LIMIT = -40;
-
+//static int16_t RSSI_LIMIT = -10;
+static int16_t b_rssi;
+#define RSSI_LIMIT -40
 
 //state variables
 static uint8_t main_state = L3STATE_IDLE; //rotocol state
 static uint8_t prev_state = main_state;
 
 //SDU (input)
-static uint8_t* originalWord[1030]; //우리가 보내는 메세지
+static char originalWord[1030]; //우리가 보내는 메세지
 // static uint8_t wordLen = 0;
 
 static uint8_t sdu[1030];
@@ -56,11 +57,13 @@ void L3_initFSM(uint8_t destId)
 
 void L3_FSMrun(void)
 {   
+
     if (prev_state != main_state)
     {
         debug_if(DBGMSG_L3, "[L3] State transition from %i to %i\n", prev_state, main_state);
         prev_state = main_state;
     }
+
 
     //FSM should be implemented here! ---->>>>
     switch (main_state)
@@ -69,6 +72,7 @@ void L3_FSMrun(void)
             // RSSI timer로 일정시간(5초) 동안 들어온 신호들의 세기를 비교해서 고르는 코드
             if (!L3_timer_getTimerStatus_R())
             {
+                max_i = -1;
                 L3_timer_startTimer_R(); 
                 pc.printf("IDLE timer start\n\r");
             } 
@@ -78,11 +82,13 @@ void L3_FSMrun(void)
                 id[i] = L3_LLI_getSrcId();
                 if (id[i] == C_ID[0] || id[i] == C_ID[1] || id[i] == C_ID[2] ) //condition 1
                 { 
-                    int16_t b_rssi = L3_LLI_getRssi();
+                    b_rssi = L3_LLI_getRssi();
 
                     pc.printf("Id : %i rssi : %i\n\r",id[i], b_rssi); //출력 test
 
-                    if (b_rssi >= RSSI_LIMIT) //condition 2
+                    pc.printf("RSSI_LIMIT : %i, b_rssi : %i, %i\n\r", RSSI_LIMIT, b_rssi, b_rssi > RSSI_LIMIT);
+
+                    if (b_rssi > RSSI_LIMIT) //condition 2
                     { 
                         rssi[i] = b_rssi;
                         i++;
@@ -94,7 +100,7 @@ void L3_FSMrun(void)
                     pc.printf("ID is not our basestation. ID : %i\n\r",id[i]); // 디버깅용
                 }
 
-                    L3_event_clearEventFlag(L3_event_msgRcvd);
+                L3_event_clearEventFlag(L3_event_msgRcvd);
             }
 
             if (L3_event_checkEventFlag(L3_event_arqTimeout))
@@ -117,7 +123,6 @@ void L3_FSMrun(void)
                 {
                     myDestId = id[max_i];
                     L3_event_setEventFlag(L3_event_dataToSend);
-                    max_i = -1;
                 }
 
                 L3_event_clearEventFlag(L3_event_arqTimeout);
@@ -130,12 +135,16 @@ void L3_FSMrun(void)
                 //msg header setting
                 strcpy((char*) originalWord, "REQUEST\n\r");
                 strcpy((char*) sdu, (char*) originalWord);
-                L3_LLI_dataReqFunc(sdu, 200, myDestId);
+
+                uint8_t len = strlen(originalWord);
+
+                L3_LLI_dataReqFunc(sdu, len+1, myDestId);
 
                 pc.printf("Tried Request to %i.\n\r", myDestId);
 
                 i = 0;
-                std::memset(id, 0, sizeof(id));     // rssi값 전부 초기화
+                // max_i = -1;
+                std::memset(id, 0, sizeof(id));     // id값 전부 초기화
                 std::memset(rssi, 0, sizeof(rssi));     // rssi값 전부 초기화
 
                 L3_timer_stopTimer_R();
@@ -152,10 +161,8 @@ void L3_FSMrun(void)
         case L3STATE_ACK:{
             if (!L3_timer_getTimerStatus_A()) 
             {
-                L3_timer_startTimer_A(); // ACCEPT 기다리는 타이머 실행(5초) --> 이게 지금 안돌아가는 거 아니야..??
+                L3_timer_startTimer_A(); // ACCEPT 기다리는 타이머 실행(10초)
                 pc.printf("ACK timer start\n\r");
-
-                
             }
             
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) // ACCEPT 수신하면
@@ -180,10 +187,8 @@ void L3_FSMrun(void)
             {
                 pc.printf("Base don't ACCEPT\n\r");
 
-                // L3_timer_stopTimer_A();
                 main_state = L3STATE_IDLE;
                 L3_event_clearEventFlag(L3_event_arqTimeout);
-
             }
             
             break;
@@ -231,8 +236,10 @@ void L3_FSMrun(void)
             
             if (L3_event_checkEventFlag(L3_event_dataToSend))
             {
+                uint8_t len = strlen(originalWord);
+
                 strcpy((char*) sdu, (char*) originalWord);
-                L3_LLI_dataReqFunc(sdu, 200, myDestId);
+                L3_LLI_dataReqFunc(sdu, len+1, myDestId);
 
                 L3_timer_stopTimer();
                 main_state = L3STATE_ACK;
