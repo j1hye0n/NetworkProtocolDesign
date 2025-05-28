@@ -19,7 +19,7 @@ static uint8_t main_state = L2STATE_IDLE; //protocol state
 static uint8_t prev_state = main_state;
 
 //source/destination ID
-static uint8_t myL2ID=145;
+static uint8_t myL2ID=98;
 static uint8_t destL2ID=255;
 
 //L2 PDU context/size
@@ -195,7 +195,7 @@ void L2_FSMrun(void)
 
                 // L3_LLI_dataInd(L2_msg_getWord(dataPtr), srcId, size-L2_MSG_OFFSET_DATA, L2_LLI_getSnr(), L2_LLI_getRssi());
 #ifndef DISABLE_ARQ                
-                if (brflag == 0 && seqNum != L2_msg_getSeq(dataPtr))
+                if (0)
                     debug("[L3][WARNING] Invalid PDU SN (%i) while (%i) is required! discarding it...\n", L2_msg_getSeq(dataPtr), seqNum);
                 else
 #endif
@@ -367,7 +367,7 @@ void L2_FSMrun(void)
 
                 // L3_LLI_dataInd(L2_msg_getWord(dataPtr), srcId, size-L2_MSG_OFFSET_DATA, L2_LLI_getSnr(), L2_LLI_getRssi());
 #ifndef DISABLE_ARQ                
-                if (brflag == 0 && seqNum != L2_msg_getSeq(dataPtr))
+                if (0)
                     debug("[L3][WARNING] Invalid PDU SN (%i) while (%i) is required! discarding it...\n", L2_msg_getSeq(dataPtr), seqNum);
                 else
 #endif
