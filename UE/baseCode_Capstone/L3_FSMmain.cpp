@@ -28,6 +28,7 @@ static int16_t rssi[100];
 static int16_t max_rssi = -100;
 static uint8_t id[100];
 static int i = 0;
+static int j;
 static int16_t b_rssi;
 static int16_t rssi_L;
 static uint8_t id_L;
@@ -76,7 +77,7 @@ void L3_FSMrun(void)
             if (L3_event_checkEventFlag(L3_event_arqTimeout))
             {
                 // pc.printf("IDLE is TIME OUT!\n\r");
-                for (int j=0; j<i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
+                for (j=0; j<i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
                 {
                     if (rssi[j] > max_rssi)
                     {
@@ -99,7 +100,6 @@ void L3_FSMrun(void)
             }
             else if (!L3_timer_getTimerStatus_R())
             {
-                i = 0;
                 L3_timer_startTimer_R(); 
                 // pc.printf("IDLE timer start\n\r");
             }
