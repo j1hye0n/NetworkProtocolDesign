@@ -75,7 +75,7 @@ void L3_FSMrun(void)
             // RSSI timer로 일정시간(5초) 동안 들어온 신호들의 세기를 비교해서 고르는 코드
             if (L3_event_checkEventFlag(L3_event_arqTimeout))
             {
-                pc.printf("IDLE is TIME OUT!\n\r");
+                // pc.printf("IDLE is TIME OUT!\n\r");
                 for (int j=0; j<i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
                 {
                     if (rssi[j] > max_rssi)
@@ -99,9 +99,9 @@ void L3_FSMrun(void)
             }
             else if (!L3_timer_getTimerStatus_R())
             {
-                max_i = -1;
+                i = 0;
                 L3_timer_startTimer_R(); 
-                pc.printf("IDLE timer start\n\r");
+                // pc.printf("IDLE timer start\n\r");
             }
 
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens
@@ -143,6 +143,7 @@ void L3_FSMrun(void)
                 pc.printf("Tried Request to %i.\n\r", myDestId);
 
                 i = 0;
+                max_i = -1;
                 std::memset(id, 0, sizeof(id));     // id값 전부 초기화
                 std::memset(rssi, 0, sizeof(rssi));     // rssi값 전부 초기화
 
@@ -167,7 +168,7 @@ void L3_FSMrun(void)
             else if(!L3_timer_getTimerStatus_A())
             {
                 L3_timer_startTimer_A(); // ACCEPT 기다리는 타이머 실행(10초)
-                pc.printf("ACK timer start\n\r");
+                // pc.printf("ACK timer start\n\r");
             }
 
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) // ACCEPT 수신하면
@@ -216,7 +217,7 @@ void L3_FSMrun(void)
                     if(rssi_m > RSSI_LIMIT) // condition 2
                     {
                         max_rssi = rssi_m;
-                        pc.printf("max_rssi : %i, rssi_M > RSSI_LIMIT = %i\n", max_rssi, rssi_m > RSSI_LIMIT);
+                        pc.printf("max_rssi : %i\n", max_rssi);
                         L3_timer_stopTimer(); // 타이머 멈춤
                         L3_timer_startTimer(); // 타이머 재시작
                     }
@@ -228,7 +229,7 @@ void L3_FSMrun(void)
                         rssi_L = L3_LLI_getRssi();                   
                         if (rssi_L > max_rssi) //condition 4
                         { 
-                            pc.printf("rssi_L : %i\n", rssi_L);
+                            // pc.printf("rssi_L : %i\n", rssi_L);
                             pc.printf("New Base is detected! %i, rssi : %i\n\r", id_L, rssi_L);
 
                             //PDU 생성 "REQUEST"
