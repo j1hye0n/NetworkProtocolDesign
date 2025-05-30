@@ -10,7 +10,7 @@ Serial pc(USBTX, USBRX);
 //GLOBAL variables (DO NOT TOUCH!) ------------------------------------------
 
 //source/destination ID
-uint8_t input_thisId=98;
+uint8_t input_thisId=89;
 uint8_t input_destId=255;
 
 //FSM operation implementation ------------------------------------------------

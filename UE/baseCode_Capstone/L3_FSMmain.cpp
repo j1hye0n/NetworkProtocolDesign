@@ -76,6 +76,9 @@ void L3_FSMrun(void)
             // RSSI timer로 일정시간(5초) 동안 들어온 신호들의 세기를 비교해서 고르는 코드
             if (L3_event_checkEventFlag(L3_event_arqTimeout))
             {
+                max_i = -1;
+                max_rssi = -100;
+
                 // pc.printf("IDLE is TIME OUT!\n\r");
                 for (j=0; j<i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
                 {
@@ -143,7 +146,6 @@ void L3_FSMrun(void)
                 pc.printf("Tried Request to %i.\n\r", myDestId);
 
                 i = 0;
-                max_i = -1;
                 std::memset(id, 0, sizeof(id));     // id값 전부 초기화
                 std::memset(rssi, 0, sizeof(rssi));     // rssi값 전부 초기화
 

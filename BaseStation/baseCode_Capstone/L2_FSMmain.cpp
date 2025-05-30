@@ -19,7 +19,7 @@ static uint8_t main_state = L2STATE_IDLE; //protocol state
 static uint8_t prev_state = main_state;
 
 //source/destination ID
-static uint8_t myL2ID=98;
+static uint8_t myL2ID=89;
 static uint8_t destL2ID=255;
 
 //L2 PDU context/size

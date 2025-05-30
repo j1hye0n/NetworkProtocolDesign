@@ -111,7 +111,7 @@ void L3_FSMrun(void)
                 }
                 else //not condition1
                 {
-                    pc.printf("Unknown signal is coming.\n\r");
+                    pc.printf("Unknown signal is coming. ID : %i\n\r", srcId);
                 }
                 
                 L3_event_clearEventFlag(L3_event_msgRcvd);
@@ -124,7 +124,7 @@ void L3_FSMrun(void)
                 strcpy((char*) sdu, (char*) originalWord);
                 //L2에 data Request
                 L3_LLI_dataReqFunc(sdu, len+1, myDestId);
-                debug("[L3] msg length : %i\n", wordLen);
+                // debug("[L3] msg length : %i\n", wordLen);
                 // debug_if(DBGMSG_L3, "[L3] sending msg....\n");
                 //wordLen = 0;
 
@@ -135,6 +135,16 @@ void L3_FSMrun(void)
                 L3_event_clearEventFlag(L3_event_dataToSend);
             }
             
+            else if (!L3_timer_getTimerStatus())
+            {
+                // 주기적 DATA 송신을 위한 timer 작동
+                // 처음 PDU 셋팅
+                pc.printf("sending data , %i\n",L3_timer_getTimerStatus());
+                strcpy((char*) originalWord, "Sending DATA\n\r");
+                L3_event_setEventFlag(L3_event_dataToSend);
+                L3_timer_startTimer();
+            }
+
             if (L3_event_checkEventFlag(L3_event_arqTimeout))
             {   
                 // 일정 시간(Timer)마다 PDU(기지국 DATA) 재전송
@@ -144,15 +154,6 @@ void L3_FSMrun(void)
                 L3_timer_startTimer();
 
                 L3_event_clearEventFlag(L3_event_arqTimeout);
-            }
-            else if (!L3_timer_getTimerStatus())
-            {
-                // 주기적 DATA 송신을 위한 timer 작동
-                // 처음 PDU 셋팅
-                pc.printf("sending data , %i\n",L3_timer_getTimerStatus());
-                strcpy((char*) originalWord, "Sending DATA\n\r");
-                L3_event_setEventFlag(L3_event_dataToSend);
-                L3_timer_startTimer();
             }
             break;
 
