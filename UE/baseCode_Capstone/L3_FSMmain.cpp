@@ -36,12 +36,11 @@ static int16_t rssi_m;
 
 
 //state variables
-static uint8_t main_state = L3STATE_IDLE; //rotocol state
+static uint8_t main_state = L3STATE_IDLE;
 static uint8_t prev_state = main_state;
 
 //SDU (input)
 static char originalWord[1030]; //우리가 보내는 메세지
-// static uint8_t wordLen = 0;
 
 static uint8_t sdu[1030];
 
@@ -51,12 +50,7 @@ static uint8_t myDestId;
 
 void L3_initFSM(uint8_t destId)
 {
-
     myDestId = destId;
-    //initialize service layer
-    // pc.attach(&L3service_processInputWord, Serial::RxIrq);
-
-    // pc.printf("Give a word to send : ");
 }
 
 void L3_FSMrun(void)
@@ -69,17 +63,17 @@ void L3_FSMrun(void)
     }
 
 
-    //FSM should be implemented here! ---->>>>
     switch (main_state)
     {
-        case L3STATE_IDLE: {//IDLE state description            
+        case L3STATE_IDLE: {//IDLE state description     
+
             // RSSI timer로 일정시간(5초) 동안 들어온 신호들의 세기를 비교해서 고르는 코드
             if (L3_event_checkEventFlag(L3_event_arqTimeout))
             {
+                // 초기화
                 max_i = -1;
                 max_rssi = -100;
 
-                // pc.printf("IDLE is TIME OUT!\n\r");
                 for (j=0; j<i ; j++)   // rssi가 가장 큰 신호 id[j]구하기 condition 4
                 {
                     if (rssi[j] > max_rssi)
@@ -103,8 +97,7 @@ void L3_FSMrun(void)
             }
             else if (!L3_timer_getTimerStatus_R())
             {
-                L3_timer_startTimer_R(); 
-                // pc.printf("IDLE timer start\n\r");
+                L3_timer_startTimer_R();
             }
 
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) //if data reception event happens
@@ -114,9 +107,7 @@ void L3_FSMrun(void)
                 { 
                     b_rssi = L3_LLI_getRssi();
 
-                    pc.printf("Id : %i rssi : %i\n\r",id[i], b_rssi); //출력 test
-
-                    // pc.printf("RSSI_LIMIT : %i, b_rssi : %i, %i\n\r", RSSI_LIMIT, b_rssi, b_rssi > RSSI_LIMIT);
+                    pc.printf("Id : %i rssi : %i\n\r",id[i], b_rssi); // 들어오는 신호 출력
 
                     if (b_rssi > RSSI_LIMIT) //condition 2
                     { 
@@ -127,15 +118,16 @@ void L3_FSMrun(void)
                 }
                 else 
                 {
-                    pc.printf("ID is not our basestation. ID : %i\n\r",id[i]); // 디버깅용
+                    // 외부 기지국 확인
+                    pc.printf("ID is not our basestation. ID : %i\n\r",id[i]);
                 }
 
                 L3_event_clearEventFlag(L3_event_msgRcvd);
             }
             else if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent
             {
-                //PDU 생성 "REQUEST"
-                //msg header setting
+                // PDU 생성 "REQUEST"
+                // msg header setting
                 strcpy((char*) originalWord, "REQUEST\n\r");
                 strcpy((char*) sdu, (char*) originalWord);
 
@@ -170,7 +162,6 @@ void L3_FSMrun(void)
             else if(!L3_timer_getTimerStatus_A())
             {
                 L3_timer_startTimer_A(); // ACCEPT 기다리는 타이머 실행(10초)
-                // pc.printf("ACK timer start\n\r");
             }
 
             if (L3_event_checkEventFlag(L3_event_msgRcvd)) // ACCEPT 수신하면
@@ -182,7 +173,7 @@ void L3_FSMrun(void)
                     pc.printf("Base sent ACCEPT\n\r");
                     
                     // 타이머 중지
-                    L3_timer_stopTimer_A(); // 타이머 중지
+                    L3_timer_stopTimer_A();
 
                     // 최근 선택한 기지국 ID 저장
                     my_cell_id = myDestId;
@@ -230,8 +221,7 @@ void L3_FSMrun(void)
                     {      
                         rssi_L = L3_LLI_getRssi();                   
                         if (rssi_L > max_rssi) //condition 4
-                        { 
-                            // pc.printf("rssi_L : %i\n", rssi_L);
+                        {
                             pc.printf("New Base is detected! %i, rssi : %i\n\r", id_L, rssi_L);
 
                             //PDU 생성 "REQUEST"

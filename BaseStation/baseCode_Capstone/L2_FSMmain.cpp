@@ -19,8 +19,8 @@ static uint8_t main_state = L2STATE_IDLE; //protocol state
 static uint8_t prev_state = main_state;
 
 //source/destination ID
-static uint8_t myL2ID=89;
-static uint8_t destL2ID=255;
+static uint8_t myL2ID=89; // 기지국 각각의 ID 기입
+static uint8_t destL2ID=255; // broadcast
 
 //L2 PDU context/size
 static uint8_t sduBuffer[SDUBUFFER_SIZE];

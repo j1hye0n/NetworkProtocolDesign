@@ -10,30 +10,19 @@ Serial pc(USBTX, USBRX);
 //GLOBAL variables (DO NOT TOUCH!) ------------------------------------------
 
 //source/destination ID
-uint8_t input_thisId=89;
-uint8_t input_destId=255;
+uint8_t input_thisId=89; // 기지국 각각의 ID 기입
+uint8_t input_destId=255; // broadcast
 
 //FSM operation implementation ------------------------------------------------
 int main(void){
 
-    // initialization
-    //pc.printf("------------------ protocol stack starts! --------------------------\n");
-    //source & destination ID setting
-    //pc.printf(":: ID for this node : ");
-    //pc.scanf("%d", &input_thisId);
-    //pc.printf(":: ID for the destination : ");
-    //pc.scanf("%d", &input_destId);
-    //pc.getc();
-
     pc.printf("endnode : %i, dest : %i\n", input_thisId, input_destId);
-    
-    
 
     //initialize lower layer stacks
     L2_initFSM(input_thisId);
     L3_initFSM(input_destId);
-    //L3_initFSM(input_thisId);
     
+
     while(1)
     {
         L2_FSMrun();
