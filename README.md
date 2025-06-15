@@ -36,4 +36,9 @@
 > 05/20(화) : UE code L3FSM_main code
 > 
 > 05/22(목) : base station, UE 연결. L2_FSMmain 등 연결에 필요한 디버깅 진행. - UE&BaseStation 연결 완, Request, Accept handshaking 동작 수행, timer 조정 및 여러 기지국 사용 후 재실험 필요
-> 
+>
+> 05/28(수) : 오류 원인 분석 - 파라미터 사이즈 및 변수 타입 변경.
+>
+> 05/29(목) : 최종 점검 및 기타 버그 수정
+>
+> 05/30(금) : 데모 영상 촬영 및 편집
