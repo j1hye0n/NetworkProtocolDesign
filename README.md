@@ -25,7 +25,7 @@
 
 # Specification
 
-[sepcification]([https://docs.google.com/document/d/1CPrHq24S4n9PZwCJH4p2SVPPtfjFayoqZT9yWprQpQs/edit?usp=sharing](https://docs.google.com/document/d/1CPrHq24S4n9PZwCJH4p2SVPPtfjFayoqZT9yWprQpQs/edit?tab=t.q416bism8jh5#heading=h.lak2rqc6ujrp)) 전문
+[sepcification](https://docs.google.com/document/d/1CPrHq24S4n9PZwCJH4p2SVPPtfjFayoqZT9yWprQpQs/edit?tab=t.q416bism8jh5#heading=h.ixr2t97z2lwn) 전문
 
 
 # 연구 일지
